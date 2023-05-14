@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Register</h1>
+  <form action="{{ url_for('register') }}" method="post">
+		<div>
+      <label for="email">Email:</label>
+      <input type="email" name="email" id="email" required>
+    </div>
+    <div>
+      <label for="username">Username:</label>
+      <input type="text" name="username" id="username" required>
+    </div>
+    <div>
+      <label for="password">Password:</label>
+      <input type="password" name="password" id="password" required>
+    </div>
+    <div>
+      <label for="confirm_password">Confirm Password:</label>
+      <input type="password" name="confirm_password" id="confirm_password" required>
+    </div>
+		<div>
+			<span>
+				Already have an account? <br> <a href="{{ url_for('login') }}">Login</a>
+			</span>
+		</div>
+    <button type="submit" id="submitBtn">Register</button>
+  </form>
+{% endblock %}
+{% block scripts %}
+  <script>
+    var password = document.getElementById("password")
+      , confirm_password = document.getElementById("confirm_password");
+
+    function validatePassword(){
+      if(password.value != confirm_password.value) {
+        confirm_password.setCustomValidity("Passwords do not match");
+      } else {
+        confirm_password.setCustomValidity('');
+      }
+    }
+
+    password.onchange = validatePassword;
+    confirm_password.onkeyup = validatePassword;
+  </script>
+{% endblock %}

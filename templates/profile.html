@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Welcome, {{ user.name }}!</h1>
+  <p>Your email is: {{ user.email }}</p>
+  <a href="{{url_for('edit_profile') }}">Edit</a>
+  <!--<ul>
+    {% for conversation in conversations %}
+      <li><a href="{{ url_for('chat', recipient_id=user.id) }}">{{ user.name }}</a></li>
+    {% endfor %}
+  </ul> -->
+<!--  <p>Available users:</p>
+  <ul>
+		<li><a href="{{ url_for('chat', recipient_id=current_user.id) }}">{{ current_user.name }} <span>(You)</span></a></li>
+    {% for user in users %}
+      {% if user.id != current_user.id %}
+        <li><a href="{{ url_for('chat', recipient_id=user.id) }}">{{ user.name }}</a></li>
+      {% endif %}
+    {% endfor %}
+  </ul>-->
+
+{% endblock %}    

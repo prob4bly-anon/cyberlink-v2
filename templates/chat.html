@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block heads %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+<style>
+	#chat-container {
+		padding: 1px;
+		border-radius: 1px;
+		height: calc(100% - 70px);
+		overflow-y: auto;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="gradient-custom" style="background-color-archived: #eee; height: 95vh; border-radius: 10px;">
+	<div class="card col-md-8 col-lg-6 col-xl-4" id="chat1" style="border-radius: 10px; height: 100%; overflow-y: auto;">
+		<div class="card-header d-flex justify-content-between align-items-center p-3 bg-info text-white border-bottom-0" style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
+			<a href="{{ url_for('chat_list') }}"><i class="fa-solid fa-arrow-left"></i></a>
+			<p class="mb-0 fw-bold">
+				@{{ receiver_username }}
+			</p>
+			<span style='display: hidden;'>
+				<i class="fas fa-times" aria-hidden="true"></i>
+			</span>
+		</div>
+		<div class="card-body overflow-auto gradient-custom" id="chat-container" style="background-archived: linear-gradient(45deg, hotpink, pink);">
+			<div class="form-outline"></div>
+			<!-- Chat messages go here -->
+		</div>
+		<div class="card-footer text-muted d-flex justify-content-start align-items-center p-3" id="send-message-bar" style="background-color: linear-gradient(180deg, ghostwhite, white);">
+			<textarea class="form-control form-control-lg" id="message_input" rows="1" placeholder="Type message..." style="resize: none;"></textarea>
+			<a class="ms-1 text-muted" href="#!"><i class="fas fa-paperclip"></i></a>
+			<a class="ms-3 text-muted" href="#!"><i class="fas fa-smile"></i></a>
+			<a class="ms-3" id="sendButton"><i class="fas fa-paper-plane"></i></a>
+		</div>
+	</div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/socketio.min.js') }}" defer></script>
+<script defer>
+	document.body.onload = function (){	document.getElementById('navBar').remove(); }
+	//eruda 
+	/*
+ (function() {
+		var script = document.createElement('script');
+		script.src = "//cdn.jsdelivr.net/npm/eruda";
+		document.body.appendChild(script);
+		script.onload = function() {
+			eruda.init()
+		}
+	})();*/
+</script>
+<script>
+function initSocket(){
+	const socket = io.connect('https://' + document.domain + ':' + location.port);
+	
+	function initChat(){
+const chatWindow = document.querySelector('#chat-container');
+const sender = '{{ sender_username }}';
+const receiver = '{{ receiver_username }}';
+let lastMessageTimestamp = null;
+let hasMoreMessages = true;
+	
+function scrollToBottom() {
+	chatWindow.scrollTop = chatWindow.scrollHeight + 5;
+}
+function sendMessage() {
+
+	var input = document.getElementById('message_input');
+	input.focus();
+	var message = input.value;
+	if (message === "" || message === "\n") {
+		return // alert("You cannot send an empty message.")
+	};
+	input.value = '';
+	socket.emit('message', {
+		'room': '{{ room }}',
+		'message': message,
+		'sender': sender,
+		'receiver': receiver
+	});
+	getLastMessageTimestamp();
+	return false;
+};
+function addMessage(message, timestamp, isUser) {
+	const date = new Date(timestamp);
+	const options = {
+  hour: 'numeric', minute: 'numeric', second: 'numeric', 
+  hour12: true, year: 'numeric', month: 'short', day: 'numeric',
+  fractionalSecondDigits: 3
+};
+  const timestamp = `${date.toLocaleTimeString('en-US', options)}`;
+	const chatContainer = document.getElementById("chat-container");
+	const messageDiv = document.createElement("div");
+	const messageContentDiv = document.createElement("div");
+	const messageAvatarImg = document.createElement("img");
+	const messageText = document.createElement("p");
+	const messageTimestamp = document.createElement('p');
+	messageDiv.classList.add("d-flex", "flex-row", "justify-content-" + (isUser ? "end" : "start"), "mb-4");
+	messageContentDiv.style.backgroundImage = "linear-gradient(45deg, lightblue, deepskyblue)";
+	messageContentDiv.classList.add("p-3", isUser ? "ms-3" : "me-3", "border");
+	messageContentDiv.style.borderRadius = "15px";
+	messageContentDiv.style.borderColor = "red";
+	messageContentDiv.style.backgroundColor = isUser ? "rgba(57, 192, 237, 0.2)" : "#fbfbfb";
+	messageTimestamp.classList.add("small", isUser ? "ms-0" : "mb-0", "rounded-3", "text-muted", (isUser ? "float-end" : ""))
+	messageTimestamp.style.fontSize = "9px";
+	messageTimestamp.style.marginBottom = "0px";
+	messageTimestamp.textContent = timestamp;
+	messageTimestamp.style.height = "0px";
+	messageAvatarImg.src = "https://static.thenounproject.com/png/5034901-200.png";
+	messageAvatarImg.alt = "avatar 1";
+	messageAvatarImg.style.width = "45px";
+	messageAvatarImg.style.height = "100%";
+	messageAvatarImg.style.borderRadius = "45px";
+	messageAvatarImg.style.borderColor = "green";
+	messageText.classList.add("small", "mb-0");
+	messageText.textContent = message;
+	messageContentDiv.appendChild(messageText);
+	messageContentDiv.appendChild(messageTimestamp);
+	if (isUser) {
+		messageDiv.appendChild(messageContentDiv);
+		messageDiv.appendChild(messageAvatarImg);
+	} else {
+		messageDiv.appendChild(messageAvatarImg);
+		messageDiv.appendChild(messageContentDiv);
+	}
+	chatContainer.appendChild(messageDiv);
+}
+
+socket.on('connect', function() {
+	console.log('connected to {{ room }}')
+	socket.emit('join', {
+		'room': '{{ room }}'
+	});
+});
+socket.on('status', function(msg) {
+	var messages = document.getElementById('chat-container');
+	var p = document.createElement('span');
+	var sysMessageContentDiv = document.createElement('div')
+	sysMessageContentDiv.classList.add("p-3", "ms-3", "border(archived)", "small", "mb-2");
+	p.classList.add("d-flex", "flex-row", "justify-content-center", "mb-4", "text-muted")
+	sysMessageContentDiv.style.borderRadius = "15px"
+	sysMessageContentDiv.style.backgroundColor = "#eaeaea"
+	sysMessageContentDiv.style.fontWeight = "bold";
+	sysMessageContentDiv.style.fontStyle = "italic";
+	sysMessageContentDiv.style.fontSize = "15px";
+	sysMessageContentDiv.style.background = "transparent";
+	//sysMessageContentDiv.style.background = "linear-gradient(45deg, #ff8a00, #e52e71)";
+	p.textContent = "System: " + msg;
+	sysMessageContentDiv.appendChild(p)
+	messages.appendChild(sysMessageContentDiv);
+});
+document.querySelector('#sendButton').onclick = function(event) {
+	event.preventDefault();
+	sendMessage();
+	scrollToBottom();
+}
+/*document.getElementById("message_input").addEventListener("keyup", function(event) {
+	if (event.keyCode === 13) {
+		event.preventDefault();
+		sendMessage();
+		scrollToBottom();
+	}
+});
+*/
+socket.on('receive_message', function(data) {
+	console.log('Client (receive_message): ', data)
+	var isSent = null;
+	if (data.sender == sender) {
+		isSent = true;
+	} else {
+		isSent = false;
+	}
+	addMessage(data.message, data.timestamp, isSent);
+})
+
+function getLastMessageTimestamp() {
+		if (hasMoreMessages) {
+			let url = `/messages/{{ room }}/getlastmsgtimestamp?limit=50&offset=0`;
+			fetch(url).then(response => response.json()).then(data => {
+				const messages = data.messages;
+				if (messages.length === 0) {
+					hasMoreMessages = false;
+					console.log("no more msgs");
+				} else {
+					for (let message of messages) {
+						lastMessageTimestamp = message.timestamp;
+					}
+				}
+			}).catch(error => console.error(error));
+		}
+	}
+	function loadMessages() {
+		if (hasMoreMessages) {
+			let url = `/messages/{{ room }}/fetch?limit=50&offset=0`;
+			if (lastMessageTimestamp !== null) {
+				url += `&last_message_timestamp=${lastMessageTimestamp}`;
+			}
+			fetch(url).then(response => response.json()).then(data => {
+				const messages = data.messages;
+				if (messages.length === 0) {
+					hasMoreMessages = false;
+					console.log("no more msgs");
+				} else {
+					for (let message of messages) {
+						let isUser = (message.sender === "{{ current_user.name }}");
+						addMessage(message.text, message.timestamp, isUser);
+						lastMessageTimestamp = message.timestamp;
+						scrollToBottom();
+					}
+				}
+			}).catch(error => console.error(error));
+		}
+	}
+	loadMessages();
+	chatWindow.addEventListener('scroll', function(event) {
+				if (chatWindow.scrollTop === 0 && hasMoreMessages) {
+					let url = `/messages/{{ room }}/fetch?limit=50&offset=0`;
+					//getLastMessageTimestamp();
+					if (lastMessageTimestamp !== null) {
+						url += `&last_message_timestamp=${lastMessageTimestamp}`;
+					}
+					fetch(url).then(response => response.json()).then(data => {
+						const messages = data.messages;
+						if (messages.length === 0) {
+							hasMoreMessages = false;
+							console.log("No More Msgs");
+						} else {
+							for (let i = messages.length - 1; i >= 0; i--) {
+								let message = messages[i];
+								let isUser = (message.sender === "{{ current_user.name }}");
+								addMessage(message.text, message.timestamp, isUser);
+								lastMessageTimestamp = message.timestamp;
+							}
+						}
+					}).catch(error => console.error(error));
+				}
+			})
+			scrollToBottom();
+		
+} alert('ok 1')
+	initChat();
+	}
+
+	try {
+		(function() {
+		var script = document.createElement('script');
+		script.src = "//cdn.jsdelivr.net/npm/eruda";
+		document.body.appendChild(script);
+		script.onload = function() {
+			eruda.init()
+		}
+	})();
+		(function() {
+		var script = document.createElement('script');
+		script.src = "{{ url_for('static', filename='js/socketio.min.js') }}";
+		document.body.appendChild(script);
+		script.onload = function() {
+			initSocket();
+		}
+	})();
+	} catch (error) {
+		alert(error)
+	}
+	
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Inbox</h1>
+  <form id="search-form">
+    <input type="text" name="search" id="search-input">
+    <button type="submit" id="search-button">Search</button>
+  </form>
+  <div id="conversations-list">
+    {% for conversation in conversations %}
+      <a href="{{ url_for('chat', conversation_id=conversation.id) }}">
+        <h3>{{ conversation.other_user.username }}</h3>
+        <p>{{ conversation.last_message.text }}</p>
+        <p>{{ conversation.last_message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+      </a>
+    {% endfor %}
+  </div>
+
+  <script>
+    // Add event listener for the search form
+    document.querySelector('#search-form').addEventListener('submit', function(e) {
+      e.preventDefault(); // prevent default form submission
+      searchUsers();
+    });
+
+    // Function to search for users
+    function searchUsers() {
+      // Get the search term from the input field
+      const searchTerm = document.querySelector('#search-input').value;
+
+      // Send an AJAX request to the server to search for users
+      fetch(`/search-users?q=${searchTerm}`)
+        .then(response => response.json())
+        .then(users => {
+          // Clear the conversations list
+          const conversationsList = document.querySelector('#conversations-list');
+          conversationsList.innerHTML = '';
+
+          // Add each user to the conversations list
+          for (const user of users) {
+            const conversationLink = document.createElement('a');
+            conversationLink.href = `/start-conversation/${user.id}`;
+            const username = document.createElement('h3');
+            username.textContent = user.username;
+            const lastMessage = document.createElement('p');
+            lastMessage.textContent = 'No messages yet';
+            const timestamp = document.createElement('p');
+            timestamp.textContent = '';
+            conversationLink.append(username, lastMessage, timestamp);
+            conversationsList.append(conversationLink);
+          }
+        })
+        .catch(error => console.error(error));
+    }
+  </script>
+{% endblock %}
