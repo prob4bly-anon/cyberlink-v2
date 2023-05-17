@@ -91,7 +91,7 @@ function addMessage(message, timestamp, isUser) {
   hour12: true, year: 'numeric', month: 'short', day: 'numeric',
   fractionalSecondDigits: 3
 };
-  const timestamp = `${date.toLocaleTimeString('en-US', options)}`;
+  const time = `${date.toLocaleTimeString('en-US', options)}`;
 	const chatContainer = document.getElementById("chat-container");
 	const messageDiv = document.createElement("div");
 	const messageContentDiv = document.createElement("div");
@@ -107,7 +107,7 @@ function addMessage(message, timestamp, isUser) {
 	messageTimestamp.classList.add("small", isUser ? "ms-0" : "mb-0", "rounded-3", "text-muted", (isUser ? "float-end" : ""))
 	messageTimestamp.style.fontSize = "9px";
 	messageTimestamp.style.marginBottom = "0px";
-	messageTimestamp.textContent = timestamp;
+	messageTimestamp.textContent = time;
 	messageTimestamp.style.height = "0px";
 	messageAvatarImg.src = "https://static.thenounproject.com/png/5034901-200.png";
 	messageAvatarImg.alt = "avatar 1";
